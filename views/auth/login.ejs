@@ -1,0 +1,42 @@
+<div class="container">
+    <h1>Entrar</h1>
+    <form id="loginForm">
+        <label for="username">Nome de Utilizador</label>
+        <input type="text" id="username" name="username" required>
+        <label for="password">Palavra-passe</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit" class="btn">Entrar</button>
+    </form>
+    <p style="text-align: center; margin-top: 20px;">
+        Não tem conta? <a href="/registro">Registe-se aqui</a>.
+    </p>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    try {
+        const resposta = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const dados = await resposta.json();
+        
+        if (dados.sucesso && dados.token) {
+            showPopup('Login efetuado com sucesso!', 'success');
+            setTimeout(() => { 
+                window.location.href = '/perfil';
+            }, 1000);
+        } else {
+            showPopup(dados.erro || 'Erro ao fazer login.', 'error');
+        }
+    } catch (error) {
+        showPopup('Erro ao conectar com o servidor', 'error');
+    }
+});
+</script>

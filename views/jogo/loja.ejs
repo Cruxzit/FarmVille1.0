@@ -1,0 +1,233 @@
+<section class="game-container">
+    <h1>Loja</h1>
+    
+    <div class="user-balance">
+        <div class="balance-display">
+            <img src="/img/moedas.gif" alt="Moedas" onerror="this.src='/img/generic.png'">
+            <span><%= user.moedas %></span> moedas
+        </div>
+    </div>
+    
+    <div class="loja-tabs">
+        <button class="loja-tab active" data-tab="vender">Vender Recursos</button>
+        <button class="loja-tab" data-tab="melhorar">Melhorar Produção</button>
+    </div>
+    
+    <div class="loja-panel active" id="vender-panel">
+        <h2>Vender Recursos</h2>
+        
+        <div class="recursos-grid">
+            <% if (recursos && recursos.length > 0) { %>
+                <% recursos.forEach(function(r) { %>
+                    <% if (r.quantidade > 0) { %>
+                        <div class="recurso-card vendivel">
+                            <img src="/img/<%= r.nome %>.png" alt="<%= r.nome %>" class="recurso-icon" onerror="this.src='/img/generic.png'">
+                            <h3><%= r.nome.charAt(0).toUpperCase() + r.nome.slice(1) %></h3>
+                            <div class="recurso-quantidade"><%= r.quantidade %></div>
+                            <div class="recurso-valor">Valor: <%= r.valor_venda %> moedas</div>
+                            <div class="vender-controles">
+                                <button class="btn-diminuir" onclick="ajustarQuantidade('<%= r.nome %>', -1)">-</button>
+                                <input type="number" id="qtd-<%= r.nome %>" min="1" max="<%= r.quantidade %>" value="1">
+                                <button class="btn-aumentar" onclick="ajustarQuantidade('<%= r.nome %>', 1, <%= r.quantidade %>)">+</button>
+                            </div>
+                            <button class="vender-btn" onclick="venderRecurso('<%= r.nome %>')">Vender</button>
+                        </div>
+                    <% } %>
+                <% }) %>
+                
+                <% if (recursos.filter(r => r.quantidade > 0).length === 0) { %>
+                    <div class="recurso-card" style="grid-column: span 3;">
+                        <img src="/img/empty-chest.png" alt="Baú vazio" class="recurso-icon">
+                        <h3>Sem recursos para vender</h3>
+                        <p>Colete recursos para poder vendê-los!</p>
+                    </div>
+                <% } %>
+            <% } else { %>
+                <div class="recurso-card" style="grid-column: span 3;">
+                    <img src="/img/empty-chest.png" alt="Baú vazio" class="recurso-icon">
+                    <h3>Sem recursos para vender</h3>
+                    <p>Colete recursos para poder vendê-los!</p>
+                </div>
+            <% } %>
+        </div>
+        <% if (recursos && recursos.length > 0 && recursos.filter(r => r.quantidade > 0).length > 0) { %>
+    <div style="text-align:center; margin-top: 20px;">
+        <button class="vender-tudo-btn" onclick="venderTudo()">Vender Tudo</button>
+    </div>
+<% } %>
+    </div>
+    
+    <div class="loja-panel" id="melhorar-panel">
+        <h2>Melhorar Produção</h2>
+        
+        <div class="recursos-grid">
+            <% if (recursos && recursos.length > 0) { %>
+                <% recursos.forEach(function(r) { %>
+                    <div class="recurso-card melhoravel">
+                        <img src="/img/<%= r.nome %>.png" alt="<%= r.nome %>" class="recurso-icon" onerror="this.src='/img/generic.png'">
+                        <h3><%= r.nome.charAt(0).toUpperCase() + r.nome.slice(1) %></h3>
+                        <div class="nivel-atual">Nível: <%= r.nivel_producao %></div>
+                        <div class="prox-nivel">+<%= r.nivel_producao %> por clique</div>
+                        <div class="custo-melhoria">
+                            Custo: <%= Math.floor(50 * Math.pow(1.5, r.nivel_producao - 1)) %> moedas
+                        </div>
+                        <button class="melhorar-btn" onclick="melhorarRecurso('<%= r.nome %>')" <%= user.moedas < Math.floor(50 * Math.pow(1.5, r.nivel_producao - 1)) ? 'disabled' : '' %>>
+                            Melhorar
+                        </button>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="recurso-card" style="grid-column: span 3;">
+                    <img src="/img/empty-chest.png" alt="Baú vazio" class="recurso-icon">
+                    <h3>Sem recursos para melhorar</h3>
+                    <p>Colete recursos primeiro para poder melhorá-los!</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+    
+    
+    <div style="margin-top: 20px; text-align: center;">
+        <a href="/perfil" class="feature-btn">Voltar ao Perfil</a>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sistema de tabs
+    const tabs = document.querySelectorAll('.loja-tab');
+    const panels = document.querySelectorAll('.loja-panel');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remover classe active de todas as tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            // Adicionar classe active à tab clicada
+            tab.classList.add('active');
+            
+            // Mostrar o painel correspondente
+            const tabName = tab.getAttribute('data-tab');
+            panels.forEach(panel => {
+                panel.classList.remove('active');
+                if (panel.id === tabName + '-panel') {
+                    panel.classList.add('active');
+                }
+            });
+        });
+    });
+});
+
+// Função para ajustar quantidade nos inputs
+function ajustarQuantidade(produto, delta, max) {
+    const input = document.getElementById(`qtd-${produto}`);
+    let valor = parseInt(input.value) + delta;
+    valor = Math.max(1, Math.min(valor, max || 9999));
+    input.value = valor;
+}
+
+// Função para vender um recurso via API
+async function venderRecurso(produto) {
+    const input = document.getElementById(`qtd-${produto}`);
+    const quantidade = parseInt(input.value);
+
+    if (isNaN(quantidade) || quantidade < 1) {
+        showPopup('Quantidade inválida!', 'error');
+        return;
+    }
+
+    try {
+        const resposta = await fetch('/jogo/vender', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ produto, quantidade })
+        });
+
+        const dados = await resposta.json();
+
+        if (dados.sucesso) {
+            showPopup(`Venda realizada! +${dados.valor} moedas`, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showPopup(`Erro: ${dados.erro}`, 'error');
+        }
+    } catch (error) {
+        showPopup('Erro ao vender recurso', 'error');
+        console.error(error);
+    }
+}
+
+// Função para mostrar popups (caso não exista)
+function showPopup(msg, tipo) {
+    let popup = document.createElement('div');
+    popup.className = 'popup ' + tipo;
+    popup.innerText = msg;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 2000);
+}
+
+// Função para melhorar um recurso
+async function melhorarRecurso(produto) {
+    try {
+        const resposta = await fetch('/jogo/melhorar', { // Corrigido para rota protegida
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ produto })
+        });
+        
+        const dados = await resposta.json();
+        
+        if (dados.sucesso) {
+            showPopup(dados.mensagem, 'success');
+            
+            // Mostrar conquistas desbloqueadas, se houver
+            if (dados.conquistasConcluidas && dados.conquistasConcluidas.length > 0) {
+                dados.conquistasConcluidas.forEach(conquista => {
+                    setTimeout(() => {
+                        showPopup(`Conquista desbloqueada: ${conquista.nome}`, 'conquista');
+                    }, 1000);
+                });
+            }
+            
+            // Mostrar se subiu de nível
+            if (dados.experiencia && dados.experiencia.subiuDeNivel) {
+                setTimeout(() => {
+                    showPopup(`Subiu para o nível ${dados.experiencia.nivelAtual}!`, 'nivel');
+                }, 1500);
+            }
+            
+            // Recarregar a página após um curto delay para atualizar os valores
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showPopup(`Erro: ${dados.erro}`, 'error');
+        }
+    } catch (error) {
+        showPopup('Erro ao melhorar recurso', 'error');
+        console.error(error);
+    }
+}
+
+async function venderTudo() {
+    if (!confirm('Tem certeza que deseja vender TODOS os seus recursos?')) return;
+
+    try {
+        const resposta = await fetch('/jogo/vender-tudo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const dados = await resposta.json();
+
+        if (dados.sucesso) {
+            showPopup(`Venda total realizada! +${dados.valorTotal} moedas`, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showPopup(`Erro: ${dados.erro}`, 'error');
+        }
+    } catch (error) {
+        showPopup('Erro ao vender tudo', 'error');
+        console.error(error);
+    }
+}
+</script>

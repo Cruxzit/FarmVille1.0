@@ -1,0 +1,183 @@
+<section class="game-container">
+    <h1>Agricultura</h1>
+    <img src="/img/farm-bg.png" alt="Fazenda" class="game-bg">
+    <p>Cultive no solo fértil para obter recursos agrícolas valiosos!</p>
+
+    <div class="game-info">
+        <div class="player-stats">
+            <div class="player-level">
+                Nível: <span id="nivel-jogador">
+                    <%= user.nivel %>
+                </span>
+            </div>
+            <div class="player-xp">
+                Experiência: <span id="xp-atual">
+                    <%= user.exp %>
+                </span>/<span id="xp-proximo">
+                    <%= user.exp_proximo_nivel %>
+                </span>
+                <div class="xp-bar">
+                    <div class="xp-progress"
+                        style="width: <%= Math.floor((user.exp / user.exp_proximo_nivel) * 100) %>%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-buttons">
+        <button class="game-button agriculture-btn" onclick="farmar('trigo')">
+            <img src="/img/trigo.png" alt="Trigo" onerror="this.src='/img/generic.png'">
+            <span>Trigo</span>
+        </button>
+        <button class="game-button agriculture-btn" onclick="farmar('milho')">
+            <img src="/img/milho.png" alt="Milho" onerror="this.src='/img/generic.png'">
+            <span>Milho</span>
+        </button>
+        <button class="game-button agriculture-btn" onclick="farmar('batata')">
+            <img src="/img/batata.png" alt="Batata" onerror="this.src='/img/generic.png'">
+            <span>Batata</span>
+        </button>
+    </div>
+
+    <div id="mensagem" class="game-message"></div>
+
+    <div class="resource-counter">
+        <div id="trigo-counter" class="resource-item">
+            <img src="/img/trigo.png" onerror="this.src='/img/generic.png'">
+            <span>0</span>
+        </div>
+        <div id="milho-counter" class="resource-item">
+            <img src="/img/milho.png" onerror="this.src='/img/generic.png'">
+            <span>0</span>
+        </div>
+        <div id="batata-counter" class="resource-item">
+            <img src="/img/batata.png" onerror="this.src='/img/generic.png'">
+            <span>0</span>
+        </div>
+    </div>
+    <div class="game-actions">
+        <a href="/perfil" class="feature-btn">Ver Inventário</a>
+        <a href="/jogo/loja" class="feature-btn">Ir para a Loja</a>
+    </div>
+</section>
+
+<script>
+    // Inicializa contadores com valores do servidor
+    document.addEventListener('DOMContentLoaded', async function () {
+        try {
+            // Carregar recursos do jogador
+            const resposta = await fetch('/jogo/api/recursos', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (resposta.ok) {
+                const dados = await resposta.json();
+                console.log("Recursos carregados na agricultura:", dados);
+
+                // Atualizar contadores baseado nos recursos disponíveis
+                if (dados && dados.recursos) {
+                    dados.recursos.forEach(recurso => {
+                        if (recurso.categoria === 'agricultura') {
+                            const counter = document.getElementById(`${recurso.nome}-counter`);
+                            if (counter) {
+                                counter.querySelector('span').textContent = recurso.quantidade;
+                            }
+                        }
+                    });
+                }
+            } else {
+                console.error("Erro ao carregar recursos:", await resposta.text());
+            }
+        } catch (error) {
+            console.error('Erro ao carregar recursos:', error);
+        }
+    });
+
+    async function farmar(produto) {
+        const button = document.querySelector(`.game-button[onclick="farmar('${produto}')"]`);
+        button.style.pointerEvents = 'none';
+        button.classList.add('farming-active');
+
+        try {
+            console.log("Coletando produto:", produto);
+            const resposta = await fetch('/jogo/coletar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ produto })
+            });
+
+            const dados = await resposta.json();
+            const mensagem = document.getElementById('mensagem');
+
+            if (dados.sucesso) {
+                // Criar elemento pop-up de animação
+                const popup = document.createElement('div');
+                popup.className = 'resource-popup';
+                popup.innerHTML = `<img src="/img/${produto}.png" onerror="this.src='/img/generic.png'">`;
+                button.appendChild(popup);
+
+                // Remover após animação
+                setTimeout(() => {
+                    if (popup.parentNode) popup.parentNode.removeChild(popup);
+                }, 1000);
+
+                // Atualizar contador do recurso
+                const counter = document.getElementById(`${produto}-counter`);
+                if (counter) {
+                    const counterSpan = counter.querySelector('span');
+                    counterSpan.textContent = dados.recursoAtual || parseInt(counterSpan.textContent) + 1;
+
+                    // Animar contador
+                    counter.classList.add('updated');
+                    setTimeout(() => counter.classList.remove('updated'), 500);
+                }
+
+                // Atualizar experiência e nível
+                if (dados.experiencia) {
+                    document.getElementById('nivel-jogador').textContent = dados.experiencia.nivelAtual;
+                    document.getElementById('xp-atual').textContent = dados.experiencia.expAtual || '0';
+
+                    // Atualizar barra de XP
+                    const xpProgress = document.querySelector('.xp-progress');
+                    if (xpProgress && dados.experiencia.expProximo) {
+                        const porcentagem = Math.floor((dados.experiencia.expAtual / dados.experiencia.expProximo) * 100);
+                        xpProgress.style.width = `${porcentagem}%`;
+                    }
+                }
+
+                // Mostrar conquistas concluídas
+                if (dados.conquistasConcluidas && dados.conquistasConcluidas.length > 0) {
+                    dados.conquistasConcluidas.forEach((conquista, index) => {
+                        setTimeout(() => {
+                            showPopup(`🏆 Conquista! ${conquista.nome}`, 'conquista');
+                        }, 1000 + (index * 1500));
+                    });
+                }
+
+                mensagem.textContent = dados.mensagem || `Você colheu ${produto} com sucesso!`;
+                mensagem.className = 'success';
+                showPopup(`+${dados.quantidade || 1} ${produto}!`, 'success');
+
+                // Mostrar se subiu de nível
+                if (dados.experiencia && dados.experiencia.subiuDeNivel) {
+                    setTimeout(() => {
+                        showPopup(`🎉 Subiu para o nível ${dados.experiencia.nivelAtual}!`, 'level-up');
+                    }, 800);
+                }
+            } else {
+                mensagem.textContent = `Erro: ${dados.erro || 'Ocorreu um problema'}`;
+                mensagem.className = 'error';
+                showPopup('Erro ao cultivar', 'error');
+            }
+        } catch (error) {
+            document.getElementById('mensagem').textContent = 'Erro ao conectar com o servidor';
+            document.getElementById('mensagem').className = 'error';
+        } finally {
+            setTimeout(() => {
+                button.classList.remove('farming-active');
+                button.style.pointerEvents = 'auto';
+            }, 500);
+        }
+    }
+</script>

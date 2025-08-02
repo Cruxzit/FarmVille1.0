@@ -1,0 +1,41 @@
+<section class="hero">
+    <div class="hero-content">
+        <h1 class="pixel-title">FarmVille</h1>
+        <p class="tagline">Cultive, Mine, Construa, Conquiste!</p>
+        <a href="<% if (!user) { %>/login<% } else { %>/perfil<% } %>" class="cta-btn">
+            <% if (!user) { %>COMEÇAR AVENTURA<% } else { %>CONTINUAR AVENTURA<% } %>
+        </a>
+    </div>
+</section>
+
+<section class="features-section">
+    <h2>EXPLORE MÚLTIPLAS ATIVIDADES</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="icon-circle agricultura">
+                <img src="/img/wheat.png" alt="Trigo" class="pixel-icon">
+            </div>
+            <h3>Agricultura</h3>
+            <p>Cultive diversos tipos de plantações e colha recursos valiosos!</p>
+            <a href="/jogo/agricultura" class="feature-btn">Cultivar</a>
+        </div>
+        
+        <div class="feature-card">
+            <div class="icon-circle mineracao">
+                <img src="/img/pickaxe.png" alt="Picareta" class="pixel-icon">
+            </div>
+            <h3>Mineração</h3>
+            <p>Escave as profundezas para encontrar minérios e pedras preciosas!</p>
+            <a href="/jogo/mineracao" class="feature-btn">Minerar</a>
+        </div>
+        
+        <div class="feature-card">
+            <div class="icon-circle floresta">
+                <img src="/img/tree.png" alt="Árvore" class="pixel-icon">
+            </div>
+            <h3>Floresta</h3>
+            <p>Colete madeira e recursos naturais para construir e prosperar!</p>
+            <a href="/jogo/floresta" class="feature-btn">Explorar</a>
+        </div>
+    </div>
+</section>

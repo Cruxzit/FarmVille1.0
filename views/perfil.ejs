@@ -1,0 +1,47 @@
+<section class="perfil-container">
+    <div class="perfil-header">
+        <img src="/img/avatar.png" alt="Avatar" class="perfil-avatar">
+        <div>
+            <h1>Perfil de <%= user ? user.username : 'Jogador' %></h1>
+            <p>Bem-vindo ao seu inventário de recursos!</p>
+        </div>
+    </div>
+    
+    <h2>Os Seus Recursos</h2>
+    
+    <div class="recursos-grid">
+        <% if (recursos && recursos.length > 0) { %>
+            <% recursos.forEach(function(r) { %>
+                <div class="recurso-card">
+                    <img src="/img/<%= r.nome %>.png" alt="<%= r.nome %>" class="recurso-icon" onerror="this.src='/img/generic.png'">
+                    <h3><%= r.nome.charAt(0).toUpperCase() + r.nome.slice(1) %></h3>
+                    <div class="recurso-quantidade"><%= r.quantidade %></div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="recurso-card" style="grid-column: span 3;">
+                <img src="/img/empty-chest.png" alt="Baú vazio" class="recurso-icon">
+                <h3>Sem recursos</h3>
+                <p>Explore o mundo para colecionar recursos!</p>
+            </div>
+        <% } %>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <h2>Atividades</h2>
+        <div class="game-buttons">
+            <a href="/jogo/agricultura" class="game-button agriculture-btn">
+                <img src="/img/trigo.png" alt="Agricultura">
+                <span>Agricultura</span>
+            </a>
+            <a href="/jogo/mineracao" class="game-button mining-btn">
+                <img src="/img/ferro.png" alt="Mineração">
+                <span>Mineração</span>
+            </a>
+            <a href="/jogo/floresta" class="game-button forest-btn">
+                <img src="/img/madeira.png" alt="Floresta">
+                <span>Floresta</span>
+            </a>
+        </div>
+    </div>
+</section>

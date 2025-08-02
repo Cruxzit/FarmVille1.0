@@ -1,0 +1,182 @@
+<section class="game-container">
+    <h1>Mineração</h1>
+    <img src="/img/mine-bg.png" alt="Mina" class="game-bg">
+    <p>Explore as cavernas profundas em busca de minerais valiosos!</p>
+
+    <div class="game-info">
+        <div class="player-stats">
+            <div class="player-level">
+                Nível: <span id="nivel-jogador">
+                    <%= user.nivel %>
+                </span>
+            </div>
+            <div class="player-xp">
+                Experiência: <span id="xp-atual">
+                    <%= user.exp %>
+                </span>/<span id="xp-proximo">
+                    <%= user.exp_proximo_nivel %>
+                </span>
+                <div class="xp-bar">
+                    <div class="xp-progress" style="width: <%= (user.exp / user.exp_proximo_nivel) * 100 %>%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-buttons">
+        <button class="game-button mining-btn" onclick="minerar('ferro')">
+            <img src="/img/ferro.png" alt="Ferro" onerror="this.src='/img/generic.png'">
+            <span>Ferro</span>
+        </button>
+        <button class="game-button mining-btn" onclick="minerar('ouro')">
+            <img src="/img/ouro.png" alt="Ouro" onerror="this.src='/img/generic.png'">
+            <span>Ouro</span>
+        </button>
+        <button class="game-button mining-btn" onclick="minerar('diamante')">
+            <img src="/img/diamante.png" alt="Diamante" onerror="this.src='/img/generic.png'">
+            <span>Diamante</span>
+        </button>
+    </div>
+
+    <div id="mensagem" class="game-message"></div>
+
+    <div class="resource-counter">
+        <div id="ferro-counter" class="resource-item">
+            <img src="/img/ferro.png" onerror="this.src='/img/generic.png'">
+            <span>0</span>
+        </div>
+        <div id="ouro-counter" class="resource-item">
+            <img src="/img/ouro.png" onerror="this.src='/img/generic.png'">
+            <span>0</span>
+        </div>
+        <div id="diamante-counter" class="resource-item">
+            <img src="/img/diamante.png" onerror="this.src='/img/generic.png'">
+            <span>0</span>
+        </div>
+    </div>
+    <div class="game-actions">
+        <a href="/perfil" class="feature-btn">Ver Inventário</a>
+        <a href="/jogo/loja" class="feature-btn">Ir para a Loja</a>
+    </div>
+</section>
+
+<script>
+    // Inicializa contadores com valores do servidor
+    document.addEventListener('DOMContentLoaded', async function () {
+        try {
+            // Carregar recursos do jogador
+            const resposta = await fetch('/jogo/api/recursos', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (resposta.ok) {
+                const dados = await resposta.json();
+                console.log("Recursos carregados na mineração:", dados);
+
+                // Atualizar contadores baseado nos recursos disponíveis
+                if (dados && dados.recursos) {
+                    dados.recursos.forEach(recurso => {
+                        if (recurso.categoria === 'mineracao') {
+                            const counter = document.getElementById(`${recurso.nome}-counter`);
+                            if (counter) {
+                                counter.querySelector('span').textContent = recurso.quantidade;
+                            }
+                        }
+                    });
+                }
+            } else {
+                console.error("Erro ao carregar recursos:", await resposta.text());
+            }
+        } catch (error) {
+            console.error('Erro ao carregar recursos:', error);
+        }
+    });
+
+    async function minerar(produto) {
+        const button = document.querySelector(`.game-button[onclick="minerar('${produto}')"]`);
+        button.style.pointerEvents = 'none';
+        button.classList.add('mining-active');
+
+        try {
+            console.log("Minerando produto:", produto);
+            const resposta = await fetch('/jogo/coletar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ produto })
+            });
+
+            const dados = await resposta.json();
+            const mensagem = document.getElementById('mensagem');
+
+            if (dados.sucesso) {
+                // Criar elemento pop-up de animação
+                const popup = document.createElement('div');
+                popup.className = 'resource-popup';
+                popup.innerHTML = `<img src="/img/${produto}.png" onerror="this.src='/img/generic.png'">`;
+                button.appendChild(popup);
+
+                // Remover após animação
+                setTimeout(() => {
+                    if (popup.parentNode) popup.parentNode.removeChild(popup);
+                }, 1000);
+
+                // Atualizar contador do recurso
+                const counter = document.getElementById(`${produto}-counter`);
+                if (counter) {
+                    const counterSpan = counter.querySelector('span');
+                    // Aqui está a correção: soma a quantidade correta coletada
+                    counterSpan.textContent = dados.recursoAtual || (parseInt(counterSpan.textContent) + (dados.quantidade || 1));
+
+                    // Animar contador
+                    counter.classList.add('updated');
+                    setTimeout(() => counter.classList.remove('updated'), 500);
+                }
+
+                // Atualizar experiência e nível
+                if (dados.experiencia) {
+                    document.getElementById('nivel-jogador').textContent = dados.experiencia.nivelAtual;
+                    document.getElementById('xp-atual').textContent = dados.experiencia.expAtual || '0';
+
+                    // Atualizar barra de XP
+                    const xpProgress = document.querySelector('.xp-progress');
+                    if (xpProgress && dados.experiencia.expProximo) {
+                        const porcentagem = Math.floor((dados.experiencia.expAtual / dados.experiencia.expProximo) * 100);
+                        xpProgress.style.width = `${porcentagem}%`;
+                    }
+                }
+
+                // Mostrar conquistas concluídas
+                if (dados.conquistasConcluidas && dados.conquistasConcluidas.length > 0) {
+                    dados.conquistasConcluidas.forEach((conquista, index) => {
+                        setTimeout(() => {
+                            showPopup(`🏆 Conquista! ${conquista.nome}`, 'conquista');
+                        }, 1000 + (index * 1500));
+                    });
+                }
+
+                mensagem.textContent = dados.mensagem || `Você minerou ${produto} com sucesso!`;
+                mensagem.className = 'success';
+                showPopup(`+${dados.quantidade || 1} ${produto}!`, 'success');
+                // Mostrar se subiu de nível
+                if (dados.experiencia && dados.experiencia.subiuDeNivel) {
+                    setTimeout(() => {
+                        showPopup(`🎉 Subiu para o nível ${dados.experiencia.nivelAtual}!`, 'level-up');
+                    }, 800);
+                }
+            } else {
+                mensagem.textContent = `Erro: ${dados.erro || 'Ocorreu um problema'}`;
+                mensagem.className = 'error';
+                showPopup('Erro ao minerar', 'error');
+            }
+        } catch (error) {
+            document.getElementById('mensagem').textContent = 'Erro ao conectar com o servidor';
+            document.getElementById('mensagem').className = 'error';
+        } finally {
+            setTimeout(() => {
+                button.classList.remove('mining-active');
+                button.style.pointerEvents = 'auto';
+            }, 500);
+        }
+    }
+</script>

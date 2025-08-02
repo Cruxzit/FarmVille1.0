@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | FarmVille</title>
+    <link rel="stylesheet" href="/css/estilos.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <%- include('partials/navbar', { user: user }) %>
+    <main>
+        <%- body %>
+    </main>
+    <script src="/js/main.js"></script>
+    <script>
+    // Função para mostrar popup de notificação
+    function showPopup(message, type = 'success') {
+        const popup = document.createElement('div');
+        popup.className = `game-popup ${type}`;
+        popup.textContent = message;
+        document.body.appendChild(popup);
+        
+        setTimeout(() => {
+            popup.classList.add('show');
+            setTimeout(() => {
+                popup.classList.remove('show');
+                setTimeout(() => popup.remove(), 300);
+            }, 2000);
+        }, 100);
+    }
+    </script>
+</body>
+</html>

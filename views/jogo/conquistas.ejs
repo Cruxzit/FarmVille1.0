@@ -1,0 +1,122 @@
+<section class="game-container">
+    <h1>Conquistas</h1>
+    
+    <div class="conquistas-container">
+        <% if (conquistas && conquistas.length > 0) { %>
+            <div class="conquistas-categorias">
+                <button class="categoria-btn ativo" data-categoria="todas">Todas</button>
+                <button class="categoria-btn" data-categoria="agricultura">Agricultura</button>
+                <button class="categoria-btn" data-categoria="mineracao">Mineração</button>
+                <button class="categoria-btn" data-categoria="floresta">Floresta</button>
+                <button class="categoria-btn" data-categoria="geral">Geral</button>
+            </div>
+            
+            <div class="conquistas-lista">
+                <% 
+                let categoriaAtual = '';
+                conquistas.forEach(function(conquista) {
+                    if (conquista.categoria !== categoriaAtual) {
+                        categoriaAtual = conquista.categoria;
+                        let categoriaTitulo = '';
+                        switch (categoriaAtual) {
+                            case 'agricultura': categoriaTitulo = 'Agricultura'; break;
+                            case 'mineracao': categoriaTitulo = 'Mineração'; break;
+                            case 'floresta': categoriaTitulo = 'Floresta'; break;
+                            case 'geral': categoriaTitulo = 'Geral'; break;
+                            default: categoriaTitulo = categoriaAtual;
+                        }
+                %>
+                    <h2 class="categoria-titulo" data-categoria="<%= categoriaAtual %>"><%= categoriaTitulo %></h2>
+                <% } %>
+                
+                <div class="conquista-card <%= conquista.concluido ? 'concluida' : '' %>" data-categoria="<%= conquista.categoria %>">
+                    <div class="conquista-icon">
+                        <% if (conquista.icone) { %>
+                            <img src="/img/<%= conquista.icone %>" alt="<%= conquista.nome %>" onerror="this.src='/img/generic.png'">
+                        <% } else { %>
+                            <img src="/img/empty-chest.png" alt="<%= conquista.nome %>">
+                        <% } %>
+                    </div>
+                    <div class="conquista-info">
+                        <h3><%= conquista.nome %></h3>
+                        <p><%= conquista.descricao %></p>
+                          <div class="conquista-progresso">
+                            <div class="barra-progresso">
+                                <div class="progresso" style="width: <%= (conquista.progresso ? Math.min(100, (conquista.progresso / conquista.objetivo) * 100) : 0) %>%;"></div>
+                            </div>
+                            <span class="texto-progresso"><%= conquista.progresso || 0 %> / <%= conquista.objetivo %></span>
+                        </div>
+                        
+                        <div class="conquista-recompensas">
+                            <% if (conquista.recompensa_moedas > 0) { %>
+                                <span class="recompensa-moedas"><%= conquista.recompensa_moedas %> moedas</span>
+                            <% } %>
+                            <% if (conquista.recompensa_pontos > 0) { %>
+                                <span class="recompensa-pontos"><%= conquista.recompensa_pontos %> pontos</span>
+                            <% } %>
+                        </div>
+                    </div>
+                    <div class="conquista-status">
+                        <% if (conquista.concluido) { %>
+                            <div class="status concluida">Concluída</div>
+                            <div class="data-conclusao"><%= new Date(conquista.data_conclusao).toLocaleDateString() %></div>
+                        <% } else { %>
+                            <div class="status pendente">Pendente</div>
+                        <% } %>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="mensagem-vazia">
+                <img src="/img/empty-chest.png" alt="Sem conquistas">
+                <p>Ainda não há conquistas disponíveis.</p>
+            </div>
+        <% } %>
+    </div>
+    
+    <div style="margin-top: 20px; text-align: center;">
+        <a href="/perfil" class="feature-btn">Voltar ao Perfil</a>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtrar conquistas por categoria
+    const categoriaBtns = document.querySelectorAll('.categoria-btn');
+    categoriaBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remover classe ativo de todos os botões
+            categoriaBtns.forEach(b => b.classList.remove('ativo'));
+            // Adicionar classe ativo ao botão clicado
+            this.classList.add('ativo');
+            
+            const categoria = this.dataset.categoria;
+            const cards = document.querySelectorAll('.conquista-card');
+            const titulos = document.querySelectorAll('.categoria-titulo');
+            
+            // Mostrar/ocultar cards baseado na categoria
+            if (categoria === 'todas') {
+                cards.forEach(card => card.style.display = 'flex');
+                titulos.forEach(titulo => titulo.style.display = 'block');
+            } else {
+                cards.forEach(card => {
+                    if (card.dataset.categoria === categoria) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                titulos.forEach(titulo => {
+                    if (titulo.dataset.categoria === categoria) {
+                        titulo.style.display = 'block';
+                    } else {
+                        titulo.style.display = 'none';
+                    }
+                });
+            }
+        });
+    });
+});
+</script>

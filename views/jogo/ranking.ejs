@@ -1,0 +1,47 @@
+<section class="game-container">
+    <h1>Ranking Global</h1>
+    
+    <div class="ranking-container">
+        <table class="ranking-table">
+            <thead>
+                <tr>
+                    <th>Posição</th>
+                    <th>Jogador</th>
+                    <th>Nível</th>
+                    <th>Pontos</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (ranking && ranking.length > 0) { %>
+                    <% ranking.forEach(function(jogador, index) { %>
+                        <tr class="<%= jogador.id === user?.id ? 'jogador-atual' : '' %>">
+                            <td><%= index + 1 %></td>
+                            <td><%= jogador.username %></td>
+                            <td><%= jogador.nivel %></td>
+                            <td><%= jogador.pontos_ranking %></td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="4">Ainda não existem jogadores no ranking.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+        
+        <% if (user && posicaoUsuario) { %>
+            <div class="sua-posicao">
+                A sua posição atual: <strong><%= posicaoUsuario %></strong>
+            </div>
+        <% } %>
+    </div>
+    
+    <div class="ranking-info">
+        <h3>Como funciona o ranking?</h3>
+        <p>O ranking é baseado nos pontos acumulados pelos jogadores. Ganhe pontos completando conquistas e vendendo recursos.</p>
+    </div>
+    
+    <div style="margin-top: 20px; text-align: center;">
+        <a href="/perfil" class="feature-btn">Voltar ao Perfil</a>
+    </div>
+</section>
