@@ -7,15 +7,7 @@
         <li><a href="/jogo/mineracao">Mineração</a></li>
         <li><a href="/jogo/floresta">Floresta</a></li>
         <li><a href="/jogo/loja">Loja</a></li>
-        <!-- Dropdown Perfil -->
-        <li class="dropdown">
-            <a href="/perfil" class="dropbtn">Perfil ▼</a>
-            <div class="dropdown-content">
-                <a href="/perfil">Perfil</a>
-                <a href="/jogo/conquistas">Conquistas</a>
-                <a href="/jogo/ranking">Ranking</a>
-            </div>
-        </li>
+        <li><a href="/perfil">Perfil</a></li>
         <% if (!user) { %>
             <li id="login-btn"><a href="/login">Entrar</a></li>
             <li id="registar-btn"><a href="/registro" class="btn-registro">Registar</a></li>
@@ -24,36 +16,3 @@
         <% } %>
     </ul>
 </nav>
-
-<style>
-/* Dropdown styles */
-.menu .dropdown {
-    position: relative;
-    display: inline-block;
-}
-.menu .dropbtn {
-    cursor: pointer;
-}
-.menu .dropdown-content {
-    display: none;
-    position: absolute;
-    background: #f9f9f9;
-    min-width: 140px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
-    border-radius: 0 0 8px 8px;
-}
-.menu .dropdown-content a {
-    color: #333;
-    padding: 10px 16px;
-    text-decoration: none;
-    display: block;
-    font-size: 15px;
-}
-.menu .dropdown-content a:hover {
-    background: #e0e0e0;
-}
-.menu .dropdown:hover .dropdown-content {
-    display: block;
-}
-</style>
